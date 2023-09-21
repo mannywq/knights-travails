@@ -42,71 +42,74 @@ class Knight
     options
   end
 
-  def build_path(start, dest)
+  def traverse_graph(start, dest)
     puts "Looking for #{start} to #{dest} path"
-    queue = []
+
+    seed = { pos: start, distance: 0, parent: nil, children: @adj_list[start] }
+
+    queue = [seed]
     visited = []
+    parents = {}
+    steps = []
 
     puts "Starting at #{start}"
 
-    queue.concat(@adj_list[start])
-
     puts "First cab off the rank: #{queue.inspect}"
-
-    while queue.any?
-
-      key = queue.shift
-
-      next if visited.include?(key)
-
-      node = @adj_list[key]
-      if key == dest
-        puts "Shortest path to #{dest} is #{visited.length} moves"
-        puts path_string(visited)
-
-        return
-      end
-
-      # puts "Current node key: #{key} children: #{node}"
-      visited << key
-
-      if node == dest
-        puts 'Found path!'
-        puts visited
-      end
-
-      node.each do |child|
-        queue << child
-      end
-
-    end
-  end
-
-  def dfs_path(start, dest, visited = [], depth = 1)
-    visited ||= []
-    max_depth ||= 8
-
-    return if depth == max_depth
-
-    puts "Current node: #{start} - searching for #{dest}"
-
-    if start == dest
-      puts "Found #{node} at #{depth}"
-      puts visited.inspect
-    end
 
     visited << start
 
-    node = @adj_list[start]
+    while queue.any?
 
-    node.each do |child|
-      dfs_path(child, dest, visited, depth + 1) unless visited.include?(child)
+      current_node = queue.shift
+
+      puts "Current node: #{current_node[:pos]}"
+
+      steps << current_node if current_node[:pos] != start
+
+      if current_node[:pos] == dest
+        puts "Shortest path to #{dest} is #{current_node[:distance]} moves"
+        path = build_path(parents, dest)
+        puts "Steps: #{path.inspect}"
+        return
+      end
+
+      @adj_list[current_node[:pos]].each do |neighbour|
+        next if visited.include?(neighbour)
+
+        puts "Looking at neighbour #{neighbour}"
+        queue << { pos: neighbour, distance: current_node[:distance] + 1, parent: current_node[:pos] }
+        puts 'Added to queue'
+        puts queue.inspect
+        visited << neighbour
+        parents[neighbour] = current_node[:pos]
+      end
+      # puts build_path(parents, dest, start)
+
+      # neighbour_node = {}
+      # neighbour_node[:children] = @adj_list[key[:pos]]
+
+      # neighbour_node[:children].each do |neighbour|
+      #   next if visited.include?(neighbour)
+
+      #   puts "Looking at neighbour #{neighbour}"
+      #   queue << { pos: neighbour, distance: key[:distance] + 1, parent: key[:pos] }
+      #   puts 'Added to queue'
+      #   puts queue.inspect
+      #   visited << neighbour
+      #   parents[neighbour] = neighbour_node
+      # end
+
     end
-    visited.pop
   end
 
-  def path_string(arr)
-    arr.map(&:to_s)
+  def build_path(parents, dest)
+    path = [dest]
+
+    while parents[dest]
+      dest = parents[dest]
+      path.unshift(dest)
+    end
+    path
   end
 
   def move(dest)
@@ -201,11 +204,11 @@ knight = Knight.new(start)
 
 knight.get_possible_moves
 
-dest = [4, 5]
+dest = [5, 5]
 knight.move(dest)
 
-# knight.adj_list.each { |k, v| puts "#{k}: #{v}" }
+knight.adj_list.each { |k, v| puts "#{k}: #{v}" }
 
-# knight.build_path(start, dest)
+knight.traverse_graph(start, dest)
 
-knight.dfs_path(start, dest)
+# knight.dfs_path(start, dest)
