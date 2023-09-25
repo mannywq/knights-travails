@@ -1,48 +1,32 @@
 class Knight
   attr_accessor :options, :adj_list, :visited
 
-  def initialize(pos = [0, 0], colour = 'white')
-    @color = colour
+  def initialize(pos = [0, 0])
     @pos = pos
-    @options = []
-    @visited = []
-    @adj_list = {}
     @rows = 8
     @cols = 8
+    # Stores the whole board and possible moves from each x, y coordinate
     @graph = {}
 
-    @moves = [
-      [1, 2],
-      [2, 1],
-      [1, -2],
-      [2, -1],
-      [-1, 2],
-      [-2, 1],
-      [-1, -2],
-      [-2, -1]
-    ]
+    @moves = [[1, 2], [2, 1], [1, -2], [2, -1], [-1, 2], [-2, 1], [-1, -2], [-2, -1]]
   end
 
+  # Creates game board and links for knight piece
   def create_graph(rows, cols)
     @graph ||= {}
 
     (0...rows).each do |row|
       (0...cols).each do |col|
+        # Temporary var to store current coords
         pos = [row, col]
-        # puts "Key is #{pos.inspect}"
-        #
 
-        # puts "At #{pos.inspect}"
-
+        # Get all possible moves from current coords
         neighbours = get_possible_moves(pos)
 
-        # puts "Found #{neighbours.inspect}"
-
+        # @graph[pos] = [neighbours]
         add_edge(pos, neighbours)
-        # puts @graph[pos].inspect
       end
     end
-    # Spot checking graph is properly working - puts @graph[[5, 7]].inspect
   end
 
   def add_edge(pos, neighbours)
@@ -50,9 +34,11 @@ class Knight
     @graph[pos] = neighbours
   end
 
+  # Get all reachable places from current position within the size of the board
   def get_possible_moves(pos)
     options = []
 
+    # Add move coords to current pos and check if within bounds
     @moves.each do |move|
       y = (pos[0] + move[0])
       x = (pos[1] + move[1])
@@ -61,41 +47,43 @@ class Knight
 
       options << [y, x]
     end
-    # puts "Options #{options.inspect} Length: #{options.length}"
+    # Return options array
     options
   end
 
   def traverse_graph(start, dest)
-    puts "Looking for #{start} to #{dest} path"
-
+    # Store the previous node in each path and distance from each node to start node
     parents = {}
     distance = {}
 
-    puts "Starting at #{start}"
-
+    # Initialise the distance hash with graph key and infinity as initial value
     @graph.keys.each { |node| distance[node] = Float::INFINITY }
 
+    # Start node has 0 distance
     distance[start] = 0
 
-    puts distance
-
+    # Clone graph to create a priority queue
     queue = @graph.keys.clone
 
     while queue.any?
 
+      # Grab the node that matches the minimum distance value
       current_node = queue.min_by { |node| distance[node] }
 
-      puts "Current node: #{current_node}"
-
+      # Get rid of the node from queue so we don't go back to it
       queue.delete(current_node)
 
-      # Found goal?
+      # Base condition: Found the destination?
       if current_node == dest
         path = []
+
+        # Back track through parents until we get back to the start and push to start of array
         while parents[current_node]
           path.unshift(current_node)
           current_node = parents[current_node]
         end
+
+        # Finally add start node to path
         path.unshift(start)
         puts "Made it in #{path.length - 1} moves"
         puts 'Moves: '
@@ -104,13 +92,15 @@ class Knight
       end
 
       # Explore neighbours
-      puts "Current node distance is: #{distance[current_node]}"
+      # puts "Current node distance is: #{distance[current_node]}"
       @graph[current_node].each do |neighbour|
-        # next if visited.include?(neighbour)
+        # Each neighbour gets a distance value of current_node + 1
         alt = distance[current_node] + 1
 
+        # Keep going until we find a shorter distance
         next unless alt < distance[neighbour]
 
+        # Update distance of node to temp alt value
         distance[neighbour] = alt
         parents[neighbour] = current_node
       end
@@ -118,12 +108,3 @@ class Knight
     end
   end
 end
-start = [0, 0]
-
-knight = Knight.new(start)
-
-knight.create_graph(8, 8)
-
-dest = [5, 7]
-
-knight.traverse_graph(start, dest)
